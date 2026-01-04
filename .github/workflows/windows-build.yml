@@ -2,23 +2,30 @@ name: Build AlNajm Windows EXE
 on: [push]
 jobs:
   build-windows:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
+    
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64
-    - name: Build
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 python3
+        
+    - name: Build Depends
       run: |
         cd depends
-        make HOST=x86_64-w64-mingw32 -j4
-        cd ..
+        make HOST=x86_64-w64-mingw32 -j2 NO_QT=1 NO_UPNP=1 NO_WALLET=0
+        
+    - name: Configure and Build
+      run: |
         ./autogen.sh
-        ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32
-        make -j4
+        ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --enable-static --disable-shared --disable-tests --disable-bench --with-gui=qt5
+        make -j2
+        
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: AlNajm-Windows-Exe
-        path: src/qt/*.exe
+        path: |
+           src/qt/*.exe
+           src/*.exe
