@@ -1,9 +1,9 @@
-// Copyright (c) 2021 The Dogecoin Core developers
+// Copyright (c) 2021 The AlNajm Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_DOGECOIN_FEES_H
-#define BITCOIN_DOGECOIN_FEES_H
+#ifndef BITCOIN_ALNAJMCOIN_FEES_H
+#define BITCOIN_ALNAJMCOIN_FEES_H
 
 #include "amount.h"
 #include "chain.h"
@@ -22,10 +22,10 @@ enum FeeRatePreset
 };
 
 /** Estimate fee rate needed to get into the next nBlocks */
-CFeeRate GetDogecoinFeeRate(int priority);
-const std::string GetDogecoinPriorityLabel(int priority);
+CFeeRate GetAlNajmFeeRate(int priority);
+const std::string GetAlNajmPriorityLabel(int priority);
 #endif // ENABLE_WALLET
-CAmount GetDogecoinMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree);
-CAmount GetDogecoinDustFee(const std::vector<CTxOut> &vout, const CAmount dustLimit);
+CAmount GetAlNajmMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree);
+CAmount GetAlNajmDustFee(const std::vector<CTxOut> &vout, const CAmount dustLimit);
 
-#endif // BITCOIN_DOGECOIN_FEES_H
+#endif // BITCOIN_ALNAJMCOIN_FEES_H

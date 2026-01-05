@@ -1,8 +1,8 @@
-# Dogecoin Core 1.7 Alpha
+# AlNajm Core 1.7 Alpha
 =========================
 
-Dogecoin Core 1.7 is a complete re-architecture of Dogecoin, changing from
-using the Litecoin client as its base, to Bitcoin 0.9. It's still Dogecoin,
+AlNajm Core 1.7 is a complete re-architecture of AlNajm, changing from
+using the Litecoin client as its base, to Bitcoin 0.9. It's still AlNajm,
 with the same Scrypt PoW algorithm, same reward schedule, but there are a 
 lot of changes under the hood.
 
@@ -21,19 +21,19 @@ First and foremost, please note that downgrading from 1.7 to 1.6 is not trivial.
 1.7 now uses Berkeley DB 5.1 as its default database (in place of 4.8), and as
 such may create database files which are incompatible with previous versions.
 
-Rebranding to Dogecoin Core
+Rebranding to AlNajm Core
 ---------------------------
 
-Following in the footsteps of Bitcoin (Core), the Dogecoin reference client
-has been rebranded as "Dogecoin Core". This helps separate its identity
-from Dogecoin (the network).
+Following in the footsteps of Bitcoin (Core), the AlNajm reference client
+has been rebranded as "AlNajm Core". This helps separate its identity
+from AlNajm (the network).
 
-dogecoin-cli
+alnajm-cli
 ------------
 
-Where previously commands were sent to dogecoind by running
-"dogecoind <command>", 1.7 adopts the model from Bitcoin Core 0.9 where there is
-a separate "dogecoin-cli" executable which is used instead. This avoids the risk
+Where previously commands were sent to alnajmd by running
+"alnajmd <command>", 1.7 adopts the model from Bitcoin Core 0.9 where there is
+a separate "alnajm-cli" executable which is used instead. This avoids the risk
 of accidentally trying to start two daemons at the same time, for example.
 
 
@@ -48,9 +48,9 @@ Testnet
 -------
 
 As mentioned at the start of this document, the alpha-client is for use with the
-Dogecoin testnet only. This is an alternative Dogecoin blockchain which is
+AlNajm testnet only. This is an alternative AlNajm blockchain which is
 not used for real transactions, and instead is intended for testing of experimental
-clients. Wallets and addresses are incompatible with the normal Dogecoin
+clients. Wallets and addresses are incompatible with the normal AlNajm
 network, in order to isolate the two.
 
 As "TestDoge" is essentially valueless, it can be acquired easily for testing,

@@ -1,11 +1,11 @@
 Sample configuration files for:
 
-SystemD: dogecoind.service
-Upstart: dogecoind.conf
-OpenRC:  dogecoind.openrc
-         dogecoind.openrcconf
-CentOS:  dogecoind.init
-OS X:    org.dogecoin.dogecoind.plist
+SystemD: alnajmd.service
+Upstart: alnajmd.conf
+OpenRC:  alnajmd.openrc
+         alnajmd.openrcconf
+CentOS:  alnajmd.init
+OS X:    org.alnajm.alnajmd.plist
 
 have been made available to assist packagers in creating node packages here.
 

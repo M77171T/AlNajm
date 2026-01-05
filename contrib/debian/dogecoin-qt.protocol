@@ -1,6 +1,6 @@
 [Protocol]
-exec=dogecoin-qt '%u'
-protocol=dogecoin
+exec=alnajm-qt '%u'
+protocol=alnajm
 input=none
 output=none
 helper=true
