@@ -1,55 +1,41 @@
-name: Build AlNajm Multi-OS
+name: بناء نظام النجم الشامل
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  # بناء نسخة الويندوز
-  windows-build:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Deps
+
+      - name: تثبيت كافة المكتبات المطلوبة
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 python3
+          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 \
+          g++-mingw-w64-x86-64 libssl-dev libevent-dev libboost-all-dev \
+          libdb-dev libdb++-dev # هذه هي المكتبة التي كانت ناقصة
 
-      - name: Build Windows
+      - name: تجهيز ملفات البناء
         run: |
-          cd depends
-          make HOST=x86_64-w64-mingw32 -j2
-          cd ..
+          chmod +x autogen.sh
           ./autogen.sh
-          ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --enable-static --disable-shared
-          make -j2
 
-      - name: Upload Windows
+      - name: بناء نسخة ويندوز (.exe)
+        run: |
+          # أضفنا --with-incompatible-bdb لتجاوز تعارض نسخ المكتبة
+          ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --without-miniupnpc --with-incompatible-bdb
+          make -j$(nproc)
+
+      - name: بناء نسخة الأندرويد واللينكس
+        run: |
+          make clean || true
+          ./configure --enable-static --disable-shared --with-gui=no --without-miniupnpc --with-incompatible-bdb
+          make -j$(nproc)
+
+      - name: رفع الملفات الجاهزة للتحميل
         uses: actions/upload-artifact@v4
         with:
-          name: AlNajm-Windows
+          name: AlNajm-Final-Builds
           path: |
-            src/qt/*.exe
             src/*.exe
-
-  # بناء نسخة للينكس/أندرويد (CLI)
-  linux-cli-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3
-
-      - name: Build
-        run: |
-          ./autogen.sh
-          ./configure --enable-static --disable-shared --with-gui=no
-          make -j2
-
-      - name: Upload Binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: AlNajm-Linux-Termux
-          path: src/alnajmd
+            src/alnajmd
