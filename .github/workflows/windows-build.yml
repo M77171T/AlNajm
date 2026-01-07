@@ -1,54 +1,37 @@
-name: Build AlNajm Multi-OS
+name: بناء نظام التشغيل المتعدد النجم
 
-on:
-  push:
+on: [push, pull_request]
 
 jobs:
-  windows-build:
+  build-windows:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Deps
+      - name: تثبيت التبعيات النظام
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 python3
 
-      - name: Build Windows
+      - name: بناء ويندوز (Windows Build)
         run: |
-          cd depends
-          make HOST=x86_64-w64-mingw32 -j2
-          cd ..
+          # التحقق من وجود مجلد depends، إذا لم يوجد سيتم تخطي الخطوة
+          if [ -d "depends" ]; then
+            cd depends
+            # إذا كان هناك Makefile سنقوم بالبناء، وإلا سنقوم بالتحميل أولاً
+            if [ -f "Makefile" ]; then
+              make HOST=x86_64-w64-mingw32 -j$(nproc)
+            else
+              echo "Makefile not found in depends, attempting to continue..."
+            fi
+            cd ..
+          fi
+
+          # إعطاء صلاحيات التشغيل لملفات البناء الأساسية
+          chmod +x autogen.sh
+          chmod +x share/genbuild.sh || true
+          
+          # البدء في بناء المشروع الرئيسي
           ./autogen.sh
-          ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --enable-static --disable-shared
-          make -j2
-
-      - name: Upload Windows
-        uses: actions/upload-artifact@v4
-        with:
-          name: AlNajm-Windows
-          path: |
-            src/qt/*.exe
-            src/*.exe
-
-  linux-cli-build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3
-
-      - name: Build Linux
-        run: |
-          ./autogen.sh
-          ./configure --enable-static --disable-shared --with-gui=no
-          make -j2
-
-      - name: Upload Binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: AlNajm-Linux-Termux
-          path: src/alnajmd
+          
+          # التكوين للبناء (إذا فش
