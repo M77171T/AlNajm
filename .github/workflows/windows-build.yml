@@ -1,37 +1,27 @@
-name: بناء نظام التشغيل المتعدد النجم
-
-on: [push, pull_request]
-
-jobs:
-  build-windows:
+  # إضافة وظيفة بناء الأندرويد
+  android-build:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: تثبيت التبعيات النظام
+      - name: تثبيت أدوات الأندرويد
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 python3
+          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3
+          # تثبيت أدوات بناء أندرويد (NDK)
+          sudo apt-get install -y openjdk-17-jdk
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
 
-      - name: بناء ويندوز (Windows Build)
+      - name: بناء نسخة الأندرويد (Android Build)
         run: |
-          # التحقق من وجود مجلد depends، إذا لم يوجد سيتم تخطي الخطوة
-          if [ -d "depends" ]; then
-            cd depends
-            # إذا كان هناك Makefile سنقوم بالبناء، وإلا سنقوم بالتحميل أولاً
-            if [ -f "Makefile" ]; then
-              make HOST=x86_64-w64-mingw32 -j$(nproc)
-            else
-              echo "Makefile not found in depends, attempting to continue..."
-            fi
-            cd ..
-          fi
-
-          # إعطاء صلاحيات التشغيل لملفات البناء الأساسية
           chmod +x autogen.sh
-          chmod +x share/genbuild.sh || true
-          
-          # البدء في بناء المشروع الرئيسي
           ./autogen.sh
-          
-          # التكوين للبناء (إذا فش
+          # إعداد البناء لمعالج ARM64 (أغلب الهواتف الحديثة)
+          ./configure --host=aarch64-linux-android --enable-static --disable-shared --with-gui=no
+          make -j$(nproc)
+
+      - name: تحميل تطبيق النجم للأندرويد
+        uses: actions/upload-artifact@v4
+        with:
+          name: النجم-أندرويد
+          path: src/alnajmd
