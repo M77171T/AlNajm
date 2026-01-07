@@ -3,17 +3,14 @@ name: Build AlNajm Multi-OS
 on: [push]
 
 jobs:
-  # بناء نسخة الويندوز
   windows-build:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Deps
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 python3
-
       - name: Build Windows
         run: |
           cd depends
@@ -22,7 +19,6 @@ jobs:
           ./autogen.sh
           ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --enable-static --disable-shared
           make -j2
-
       - name: Upload Windows
         uses: actions/upload-artifact@v4
         with:
@@ -31,23 +27,19 @@ jobs:
             src/qt/*.exe
             src/*.exe
 
-  # بناء نسخة للينكس أو للتشغيل داخل ترمكس (CLI)
   linux-cli-build:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Deps
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3
-
-      - name: Build
+      - name: Build Linux
         run: |
           ./autogen.sh
           ./configure --enable-static --disable-shared --with-gui=no
           make -j2
-
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
