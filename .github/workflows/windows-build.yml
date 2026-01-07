@@ -1,54 +1,55 @@
-name: Build AlNajm Multi-OS
+name: بناء نظام التشغيل المتعدد النجم
 
-on:
-  push:
+on: [push, pull_request]
 
 jobs:
-  windows-build:
+  build-windows:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Deps
+      - name: تثبيت التبعيات (Dependencies)
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 python3
 
-      - name: Build Windows
+      - name: بناء ويندوز (Windows Build)
         run: |
+          # الدخول لمجلد التبعيات وبناؤها أولاً
           cd depends
-          make HOST=x86_64-w64-mingw32 -j2
+          make HOST=x86_64-w64-mingw32 -j$(nproc)
           cd ..
+          # تشغيل ملفات الإعداد
           ./autogen.sh
           ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --enable-static --disable-shared
-          make -j2
+          make -j$(nproc)
 
-      - name: Upload Windows
+      - name: تحميل الملفات الناتجة (Upload)
         uses: actions/upload-artifact@v4
         with:
-          name: AlNajm-Windows
+          name: النجم-ويندوز
           path: |
             src/qt/*.exe
             src/*.exe
 
-  linux-cli-build:
+  build-linux:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Deps
+      - name: تثبيت تبعيات لينكس
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3
+          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 libssl-dev libevent-dev libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-test-dev libboost-thread-dev
 
-      - name: Build Linux
+      - name: بناء لينكس
         run: |
           ./autogen.sh
           ./configure --enable-static --disable-shared --with-gui=no
-          make -j2
+          make -j$(nproc)
 
-      - name: Upload Binary
+      - name: تحميل الملف الثنائي
         uses: actions/upload-artifact@v4
         with:
-          name: AlNajm-Linux-Termux
+          name: النجم-لينكس
           path: src/alnajmd
