@@ -1,27 +1,39 @@
-  # إضافة وظيفة بناء الأندرويد
-  android-build:
+name: بناء نظام تشغيل النجم المتعدد
+
+on: [push, pull_request]
+
+jobs:
+  build-all:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: تثبيت أدوات الأندرويد
+      - name: تثبيت كافة التبعيات المطلوبة
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3
-          # تثبيت أدوات بناء أندرويد (NDK)
-          sudo apt-get install -y openjdk-17-jdk
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 \
+          g++-mingw-w64-x86-64 g++-aarch64-linux-gnu libssl-dev libevent-dev libboost-all-dev
 
-      - name: بناء نسخة الأندرويد (Android Build)
+      - name: بناء ويندوز (Windows)
         run: |
           chmod +x autogen.sh
           ./autogen.sh
-          # إعداد البناء لمعالج ARM64 (أغلب الهواتف الحديثة)
-          ./configure --host=aarch64-linux-android --enable-static --disable-shared --with-gui=no
+          # سنحاول البناء مباشرة باستخدام مترجم ويندوز
+          ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui || ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared
+          make -j$(nproc)
+      
+      - name: بناء أندرويد (Android-Termux)
+        run: |
+          make clean || true
+          ./autogen.sh
+          ./configure --host=aarch64-linux-gnu --enable-static --disable-shared --with-gui=no
           make -j$(nproc)
 
-      - name: تحميل تطبيق النجم للأندرويد
+      - name: تحميل الملفات الناتجة
         uses: actions/upload-artifact@v4
         with:
-          name: النجم-أندرويد
-          path: src/alnajmd
+          name: النجم-النسخ-النهائية
+          path: |
+            src/*.exe
+            src/alnajmd
+            src/qt/*.exe
