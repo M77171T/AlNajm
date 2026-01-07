@@ -5,7 +5,7 @@ on: [push]
 jobs:
   # بناء نسخة الويندوز
   windows-build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
@@ -33,7 +33,7 @@ jobs:
 
   # بناء نسخة للينكس/أندرويد (CLI)
   linux-cli-build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
