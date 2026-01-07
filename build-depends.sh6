@@ -1,0 +1,6 @@
+#!/bin/bash
+# بناء التبعيات الأساسية لعملة النجم
+cd depends
+make HOST=x86_64-w64-mingw32 -j$(nproc)
+make HOST=aarch64-linux-android -j$(nproc)
+cd ..
