@@ -1,39 +1,38 @@
-name: بناء نظام تشغيل النجم المتعدد
+name: بناء نظام النجم
 
 on: [push, pull_request]
 
 jobs:
-  build-all:
+  build:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: تثبيت كافة التبعيات المطلوبة
+      - name: تثبيت التبعيات
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 \
-          g++-mingw-w64-x86-64 g++-aarch64-linux-gnu libssl-dev libevent-dev libboost-all-dev
+          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 g++-mingw-w64-x86-64 libssl-dev libevent-dev libboost-all-dev
 
-      - name: بناء ويندوز (Windows)
+      - name: تشغيل autogen
         run: |
           chmod +x autogen.sh
           ./autogen.sh
-          # سنحاول البناء مباشرة باستخدام مترجم ويندوز
-          ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui || ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared
-          make -j$(nproc)
-      
-      - name: بناء أندرويد (Android-Termux)
+
+      - name: بناء ويندوز
         run: |
-          make clean || true
-          ./autogen.sh
-          ./configure --host=aarch64-linux-gnu --enable-static --disable-shared --with-gui=no
+          ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --without-miniupnpc
           make -j$(nproc)
 
-      - name: تحميل الملفات الناتجة
+      - name: بناء أندرويد ولينكس
+        run: |
+          make clean || true
+          ./configure --enable-static --disable-shared --with-gui=no --without-miniupnpc
+          make -j$(nproc)
+
+      - name: رفع الملفات
         uses: actions/upload-artifact@v4
         with:
-          name: النجم-النسخ-النهائية
+          name: AlNajm-Final-Build
           path: |
             src/*.exe
             src/alnajmd
-            src/qt/*.exe
