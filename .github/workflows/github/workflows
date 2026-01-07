@@ -1,0 +1,35 @@
+name: بناء نظام النجم المتكامل
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: تثبيت أدوات النظام
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 g++-mingw-w64-x86-64
+
+      - name: بناء التبعيات (الخطوة الأهم)
+        run: |
+          # سنقوم ببناء المكتبات يدوياً لتجنب خطأ libdb_cxx
+          chmod +x build-depends.sh
+          ./build-depends.sh || echo "سيتم الاعتماد على مكتبات النظام إذا فشل البناء اليدوي"
+
+      - name: تجهيز وبناء ويندوز
+        run: |
+          chmod +x autogen.sh
+          ./autogen.sh
+          ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --with-incompatible-bdb --disable-tests
+          make -j$(nproc)
+
+      - name: رفع الملفات الجاهزة
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlNajm-Build
+          path: |
+            src/*.exe
+            src/alnajmd
