@@ -29,7 +29,6 @@ jobs:
         BITCOIN_ROOT=$(pwd)
         BDB_PREFIX="${BITCOIN_ROOT}/db4"
         ./autogen.sh
-        # أضفنا هنا خيار --with-incompatible-bdb لضمان القبول ومسارات المكتبة بدقة
         ./configure --host=x86_64-w64-mingw32 \
                     --disable-shared \
                     --enable-static \
@@ -39,12 +38,10 @@ jobs:
                     CPPFLAGS="-I${BDB_PREFIX}/include" \
                     LDFLAGS="-L${BDB_PREFIX}/lib"
         make
-        
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
         name: AlNajm-Windows-Binary
         path: |
           src/*.exe
-          src/alnajmd.exe
-          src/alnajm-cli.exe
