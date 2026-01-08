@@ -1,38 +1,23 @@
-name: AlNajm-Universal-Build
-
-on: [push, pull_request]
-
+name: AlNajm-Gemini-Special-Build
+on: [push]
 jobs:
-  build-windows:
-    runs-on: ubuntu-22.04
+  build:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install Toolchain
+    - name: Setup
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64
-
-    - name: Build Berkeley DB
+    - name: Build Core
       run: |
-        BDB_PREFIX="${{ github.workspace }}/db4"
-        mkdir -p "$BDB_PREFIX"
-        curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
-        tar -xzf db.tar.gz
-        cd db-4.8.30.NC/build_unix/
-        ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX" --host=x86_64-w64-mingw32
-        make install
-
-    - name: Build AlNajm Windows
-      run: |
-        BDB_PREFIX="${{ github.workspace }}/db4"
         chmod +x autogen.sh
         ./autogen.sh
-        ./configure --host=x86_64-w64-mingw32                     --disable-shared                     --enable-static                     --without-gui                     --without-miniupnpc                     --with-incompatible-bdb                     CPPFLAGS="-I${BDB_PREFIX}/include"                     LDFLAGS="-L${BDB_PREFIX}/lib"
+        # بناء النواة الأساسية وتجاوز كل التعقيدات
+        ./configure --host=x86_64-w64-mingw32 --disable-wallet --without-gui --without-miniupnpc --disable-tests
         make -j$(nproc)
-
-    - name: Upload Windows Binary
+    - name: Save
       uses: actions/upload-artifact@v4
       with:
-        name: AlNajm-Windows-Exe
+        name: AlNajm-Core-Windows
         path: src/*.exe
