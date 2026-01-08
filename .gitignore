@@ -129,3 +129,4 @@ stage/
 *.iws
 *.iml
 *.ipr
+.env
