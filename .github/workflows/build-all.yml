@@ -1,23 +1,44 @@
-name: AlNajm-Gemini-Special-Build
+name: AlNajm-Full-Power-Build
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
-    - name: Setup
+    
+    - name: Install All-in-One
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64
-    - name: Build Core
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 
+        sudo apt-get install -y libssl-dev libevent-dev libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-test-dev libboost-thread-dev
+    
+    - name: Build Berkeley DB
       run: |
+        BDB_PREFIX="${{ github.workspace }}/db4"
+        mkdir -p "$BDB_PREFIX"
+        curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
+        tar -xzf db.tar.gz
+        cd db-4.8.30.NC/build_unix/
+        ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX" --host=x86_64-w64-mingw32
+        make install
+
+    - name: Final Construction
+      run: |
+        BDB_PREFIX="${{ github.workspace }}/db4"
         chmod +x autogen.sh
         ./autogen.sh
-        # بناء النواة الأساسية وتجاوز كل التعقيدات
-        ./configure --host=x86_64-w64-mingw32 --disable-wallet --without-gui --without-miniupnpc --disable-tests
+        ./configure --host=x86_64-w64-mingw32 \
+                    --enable-static \
+                    --disable-shared \
+                    --without-gui \
+                    --with-incompatible-bdb \
+                    --with-boost-libdir=/usr/lib/x86_64-linux-gnu \
+                    CPPFLAGS="-I${BDB_PREFIX}/include" \
+                    LDFLAGS="-L${BDB_PREFIX}/lib"
         make -j$(nproc)
-    - name: Save
+        
+    - name: Success Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AlNajm-Core-Windows
+        name: AlNajm-Full-Wallet-Windows
         path: src/*.exe
