@@ -1,18 +1,20 @@
-name: AlNajm-Full-Power-Build
+name: AlNajm-Ultimate-Automated-Build
 on: [push]
 jobs:
-  build:
+  windows-wallet-build:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install All-in-One
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Prepare Global Environment
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 
-        sudo apt-get install -y libssl-dev libevent-dev libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-test-dev libboost-thread-dev
-    
-    - name: Build Berkeley DB
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 libssl-dev libevent-dev
+        # تثبيت كافة ملحقات Boost المطلوبة للمحفظة
+        sudo apt-get install -y libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+
+    - name: Build Berkeley DB (The Heart of Wallet)
       run: |
         BDB_PREFIX="${{ github.workspace }}/db4"
         mkdir -p "$BDB_PREFIX"
@@ -20,13 +22,14 @@ jobs:
         tar -xzf db.tar.gz
         cd db-4.8.30.NC/build_unix/
         ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX" --host=x86_64-w64-mingw32
-        make install
+        make install -j$(nproc)
 
-    - name: Final Construction
+    - name: Full Compilation (AlNajm + Wallet)
       run: |
         BDB_PREFIX="${{ github.workspace }}/db4"
         chmod +x autogen.sh
         ./autogen.sh
+        # أمر التكوين الاحترافي: يربط المكتبات يدوياً لتجنب خطأ الكشف التلقائي
         ./configure --host=x86_64-w64-mingw32 \
                     --enable-static \
                     --disable-shared \
@@ -34,11 +37,12 @@ jobs:
                     --with-incompatible-bdb \
                     --with-boost-libdir=/usr/lib/x86_64-linux-gnu \
                     CPPFLAGS="-I${BDB_PREFIX}/include" \
-                    LDFLAGS="-L${BDB_PREFIX}/lib"
+                    LDFLAGS="-L${BDB_PREFIX}/lib" \
+                    BOOST_ASIO_PROGRAM_OPTIONS_LIB="-lboost_program_options-mt"
         make -j$(nproc)
-        
-    - name: Success Artifact
+
+    - name: Deliver Final Product
       uses: actions/upload-artifact@v4
       with:
-        name: AlNajm-Full-Wallet-Windows
+        name: AlNajm-Windows-Full-Package
         path: src/*.exe
