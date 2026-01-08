@@ -1,4 +1,4 @@
-name: AlNajm Universal Build
+name: AlNajm-Universal-Build
 
 on: [push, pull_request]
 
@@ -7,76 +7,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - name: Install Windows Toolchain
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64
-    
-    - name: Build Berkeley DB (Static)
-      run: |
-        BDB_PREFIX="$(pwd)/db4"
-        mkdir -p "${BDB_PREFIX}"
-        curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
-        tar -xzf db.tar.gz
-        cd db-4.8.30.NC/build_unix/
-        ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="${BDB_PREFIX}" --host=x86_64-w64-mingw32
-        make install
-        
-    - name: Build AlNajm Windows
-      run: |
-        BDB_PREFIX="$(pwd)/db4"
-        chmod +x autogen.sh
-        ./autogen.sh
-        ./configure --host=x86_64-w64-mingw32 --disable-shared --enable-static --without-gui --without-miniupnpc --with-incompatible-bdb CPPFLAGS="-I${BDB_PREFIX}/include" LDFLAGS="-L${BDB_PREFIX}/lib"
-        make -j$(nproc)
-        
-    - name: Upload Windows Exe
-      uses: actions/upload-artifact@v4
-      with:
-        name: AlNajm-Windows
-        path: src/*.exe
 
-  build-linux:
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install Linux Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git libssl-dev libevent-dev libboost-all-dev libdb5.3++-dev
-    - name: Build AlNajm Linux
-      run: |
-        chmod +x autogen.sh
-        ./autogen.sh
-        ./configure --enable-static --disable-shared --without-gui --with-incompatible-bdb
-        make -j$(nproc)
-    - name: Upload Linux Binary
-      uses: actions/upload-artifact@v4
-      with:
-
-git add .github/workflows/build-all.yml
-git commit -m "بناء نظام النجم الشامل للويندوز واللينكس مع تثبيت BDB"
-git push origin master --force
-
-cat <<EOF > .github/workflows/build-all.yml
-name: AlNajm Universal Build
-
-on: [push, pull_request]
-
-jobs:
-  build-windows:
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-    
     - name: Install Toolchain
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64
 
-    - name: Build Berkeley DB (The Correct Way)
+    - name: Build Berkeley DB
       run: |
-        # إنشاء مسار مطلق للمكتبة
         BDB_PREFIX="${{ github.workspace }}/db4"
         mkdir -p "$BDB_PREFIX"
         curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
@@ -90,18 +28,9 @@ jobs:
         BDB_PREFIX="${{ github.workspace }}/db4"
         chmod +x autogen.sh
         ./autogen.sh
-        # تمرير المسارات بشكل إجباري لـ configure
-        ./configure --host=x86_64-w64-mingw32 \
-                    --disable-shared \
-                    --enable-static \
-                    --without-gui \
-                    --without-miniupnpc \
-                    --with-incompatible-bdb \
-                    --with-boost-libdir=/usr/lib/x86_64-linux-gnu \
-                    CPPFLAGS="-I${BDB_PREFIX}/include" \
-                    LDFLAGS="-L${BDB_PREFIX}/lib"
+        ./configure --host=x86_64-w64-mingw32                     --disable-shared                     --enable-static                     --without-gui                     --without-miniupnpc                     --with-incompatible-bdb                     CPPFLAGS="-I${BDB_PREFIX}/include"                     LDFLAGS="-L${BDB_PREFIX}/lib"
         make -j$(nproc)
-        
+
     - name: Upload Windows Binary
       uses: actions/upload-artifact@v4
       with:
