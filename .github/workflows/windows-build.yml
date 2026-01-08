@@ -11,19 +11,17 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
-        sudo apt-get install -y g++-mingw-w64-x86-64
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64
 
     - name: Build Berkeley DB
       run: |
         BITCOIN_ROOT=$(pwd)
         BDB_PREFIX="${BITCOIN_ROOT}/db4"
         mkdir -p "${BDB_PREFIX}"
-        curl -O 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
-        echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c
+        curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db-4.8.30.NC.tar.gz
         tar -xzf db-4.8.30.NC.tar.gz
         cd db-4.8.30.NC/build_unix/
-        ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="${BDB_PREFIX}"
+        ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="${BDB_PREFIX}" --host=x86_64-w64-mingw32
         make install
 
     - name: Build AlNajm
@@ -31,11 +29,22 @@ jobs:
         BITCOIN_ROOT=$(pwd)
         BDB_PREFIX="${BITCOIN_ROOT}/db4"
         ./autogen.sh
-        ./configure --host=x86_64-w64-mingw32 --disable-shared --enable-static --without-gui --without-miniupnpc CPPFLAGS="-I${BDB_PREFIX}/include/" LDFLAGS="-L${BDB_PREFIX}/lib/"
+        # أضفنا هنا خيار --with-incompatible-bdb لضمان القبول ومسارات المكتبة بدقة
+        ./configure --host=x86_64-w64-mingw32 \
+                    --disable-shared \
+                    --enable-static \
+                    --without-gui \
+                    --without-miniupnpc \
+                    --with-incompatible-bdb \
+                    CPPFLAGS="-I${BDB_PREFIX}/include" \
+                    LDFLAGS="-L${BDB_PREFIX}/lib"
         make
-
+        
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: AlNajm-Windows-Exe
-        path: src/*.exe
+        name: AlNajm-Windows-Binary
+        path: |
+          src/*.exe
+          src/alnajmd.exe
+          src/alnajm-cli.exe
