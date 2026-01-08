@@ -1,20 +1,15 @@
-name: AlNajm-Ultimate-Automated-Build
+name: AlNajm-Super-Build-System
 on: [push]
 jobs:
-  windows-wallet-build:
+  build-windows:
     runs-on: ubuntu-20.04
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Prepare Global Environment
+    - uses: actions/checkout@v4
+    - name: Install Toolchain
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 libssl-dev libevent-dev
-        # تثبيت كافة ملحقات Boost المطلوبة للمحفظة
-        sudo apt-get install -y libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
-
-    - name: Build Berkeley DB (The Heart of Wallet)
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 libssl-dev libevent-dev libboost-all-dev
+    - name: Build BDB
       run: |
         BDB_PREFIX="${{ github.workspace }}/db4"
         mkdir -p "$BDB_PREFIX"
@@ -23,26 +18,35 @@ jobs:
         cd db-4.8.30.NC/build_unix/
         ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX" --host=x86_64-w64-mingw32
         make install -j$(nproc)
-
-    - name: Full Compilation (AlNajm + Wallet)
+    - name: Build Windows
       run: |
         BDB_PREFIX="${{ github.workspace }}/db4"
         chmod +x autogen.sh
         ./autogen.sh
-        # أمر التكوين الاحترافي: يربط المكتبات يدوياً لتجنب خطأ الكشف التلقائي
-        ./configure --host=x86_64-w64-mingw32 \
-                    --enable-static \
-                    --disable-shared \
-                    --without-gui \
-                    --with-incompatible-bdb \
-                    --with-boost-libdir=/usr/lib/x86_64-linux-gnu \
-                    CPPFLAGS="-I${BDB_PREFIX}/include" \
-                    LDFLAGS="-L${BDB_PREFIX}/lib" \
-                    BOOST_ASIO_PROGRAM_OPTIONS_LIB="-lboost_program_options-mt"
+        ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --with-incompatible-bdb CPPFLAGS="-I${BDB_PREFIX}/include" LDFLAGS="-L${BDB_PREFIX}/lib"
         make -j$(nproc)
-
-    - name: Deliver Final Product
+    - name: Upload Windows
       uses: actions/upload-artifact@v4
       with:
-        name: AlNajm-Windows-Full-Package
+        name: AlNajm-Windows
         path: src/*.exe
+
+  build-android-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Linux/Android Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git libssl-dev libevent-dev libboost-all-dev libdb++-dev
+    - name: Build Android-Compatible Core
+      run: |
+        chmod +x autogen.sh
+        ./autogen.sh
+        ./configure --enable-static --disable-shared --without-gui --with-incompatible-bdb
+        make -j$(nproc)
+    - name: Upload Android-Core
+      uses: actions/upload-artifact@v4
+      with:
+        name: AlNajm-Android-Linux-Core
+        path: src/alnajmd
