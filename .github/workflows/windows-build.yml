@@ -1,38 +1,41 @@
-name: بناء نظام النجم
+name: Windows Build
 
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-      - name: تثبيت التبعيات
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python3 g++-mingw-w64-x86-64 libssl-dev libevent-dev libboost-all-dev
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
+        sudo apt-get install -y g++-mingw-w64-x86-64
 
-      - name: تشغيل autogen
-        run: |
-          chmod +x autogen.sh
-          ./autogen.sh
+    - name: Build Berkeley DB
+      run: |
+        BITCOIN_ROOT=$(pwd)
+        BDB_PREFIX="${BITCOIN_ROOT}/db4"
+        mkdir -p "${BDB_PREFIX}"
+        curl -O 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
+        echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c
+        tar -xzf db-4.8.30.NC.tar.gz
+        cd db-4.8.30.NC/build_unix/
+        ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="${BDB_PREFIX}"
+        make install
 
-      - name: بناء ويندوز
-        run: |
-          ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --without-miniupnpc
-          make -j$(nproc)
+    - name: Build AlNajm
+      run: |
+        BITCOIN_ROOT=$(pwd)
+        BDB_PREFIX="${BITCOIN_ROOT}/db4"
+        ./autogen.sh
+        ./configure --host=x86_64-w64-mingw32 --disable-shared --enable-static --without-gui --without-miniupnpc CPPFLAGS="-I${BDB_PREFIX}/include/" LDFLAGS="-L${BDB_PREFIX}/lib/"
+        make
 
-      - name: بناء أندرويد ولينكس
-        run: |
-          make clean || true
-          ./configure --enable-static --disable-shared --with-gui=no --without-miniupnpc
-          make -j$(nproc)
-
-      - name: رفع الملفات
-        uses: actions/upload-artifact@v4
-        with:
-          name: AlNajm-Final-Build
-          path: |
-            src/*.exe
-            src/alnajmd
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: AlNajm-Windows-Exe
+        path: src/*.exe
