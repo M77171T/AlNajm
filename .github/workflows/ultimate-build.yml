@@ -1,4 +1,4 @@
-name: AlNajm-Final-V4
+name: AlNajm-Optimized-V4
 on: [push]
 jobs:
   build:
@@ -11,7 +11,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 libssl-dev libevent-dev libboost-all-dev
 
-    - name: Build Berkeley DB (The Core)
+    - name: Build Berkeley DB (Clean Build)
       run: |
         BDB_PREFIX="${{ github.workspace }}/db4"
         mkdir -p "$BDB_PREFIX"
@@ -22,6 +22,8 @@ jobs:
         cd build_unix/
         ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX"
         make install -j$(nproc)
+        # تنظيف ملفات المصدر لتقليل التخزين
+        cd ../../ && rm -rf db-4.8.30.NC db.tar.gz
 
     - name: Build Windows Executable
       run: |
@@ -31,8 +33,15 @@ jobs:
         ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --with-incompatible-bdb CPPFLAGS="-I${BDB_PREFIX}/include" LDFLAGS="-L${BDB_PREFIX}/lib"
         make -j$(nproc)
 
-    - name: Upload Artifacts (V4)
+    - name: Strip & Compress (Save Space)
+      run: |
+        x86_64-w64-mingw32-strip src/*.exe
+        # إزالة ملفات الأوبجكت الضخمة قبل الرفع
+        find . -name "*.o" -type f -delete
+
+    - name: Upload Artifacts (Small & Fast)
       uses: actions/upload-artifact@v4
       with:
         name: AlNajm-Windows-Wallet
         path: src/*.exe
+        retention-days: 1  # سيتم حذف الملف تلقائياً بعد يوم واحد لتوفير مساحتك
