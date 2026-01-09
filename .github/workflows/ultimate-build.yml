@@ -1,47 +1,43 @@
-name: AlNajm-Optimized-V4
+name: AlNajm-HighPower-Build
 on: [push]
 jobs:
   build:
+    # استخدام Ubuntu-20.04 لأنه يوفر 4 أنوية و 16 جيجا رام مجاناً للمشاريع العامة
     runs-on: ubuntu-20.04
+    
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Set Up OS Resources
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 libssl-dev libevent-dev libboost-all-dev
 
-    - name: Build Berkeley DB (Clean Build)
+    - name: Build Core Components (Multi-Threaded)
       run: |
         BDB_PREFIX="${{ github.workspace }}/db4"
         mkdir -p "$BDB_PREFIX"
         curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
         tar -xzf db.tar.gz
-        cd db-4.8.30.NC/
-        sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h
-        cd build_unix/
+        cd db-4.8.30.NC/dbinc
+        sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' atomic.h
+        cd ../build_unix/
         ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX"
+        # استخدام nproc لاستغلال الـ 4 أنوية كاملة كما ذكرت الوثيقة
         make install -j$(nproc)
-        # تنظيف ملفات المصدر لتقليل التخزين
-        cd ../../ && rm -rf db-4.8.30.NC db.tar.gz
 
-    - name: Build Windows Executable
+    - name: Compile AlNajm Wallet
       run: |
         BDB_PREFIX="${{ github.workspace }}/db4"
         chmod +x autogen.sh
         ./autogen.sh
         ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --with-incompatible-bdb CPPFLAGS="-I${BDB_PREFIX}/include" LDFLAGS="-L${BDB_PREFIX}/lib"
+        # استغلال كامل قوة الجهاز الافتراضي
         make -j$(nproc)
 
-    - name: Strip & Compress (Save Space)
-      run: |
-        x86_64-w64-mingw32-strip src/*.exe
-        # إزالة ملفات الأوبجكت الضخمة قبل الرفع
-        find . -name "*.o" -type f -delete
-
-    - name: Upload Artifacts (Small & Fast)
+    - name: Save & Upload
       uses: actions/upload-artifact@v4
       with:
-        name: AlNajm-Windows-Wallet
+        name: AlNajm-Windows-64bit
         path: src/*.exe
-        retention-days: 1  # سيتم حذف الملف تلقائياً بعد يوم واحد لتوفير مساحتك
+        retention-days: 1
