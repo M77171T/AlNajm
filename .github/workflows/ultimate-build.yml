@@ -18,7 +18,6 @@ jobs:
         curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
         tar -xzf db.tar.gz
         cd db-4.8.30.NC/
-        # رقعة إصلاح الخطأ الذري الشهير
         sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h
         cd build_unix/
         ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX"
@@ -32,8 +31,8 @@ jobs:
         ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --with-incompatible-bdb CPPFLAGS="-I${BDB_PREFIX}/include" LDFLAGS="-L${BDB_PREFIX}/lib"
         make -j$(nproc)
 
-    - name: Upload Artifacts (V4 ONLY)
+    - name: Upload Artifacts (V4)
       uses: actions/upload-artifact@v4
       with:
-        name: AlNajm-Release-Package
+        name: AlNajm-Windows-Wallet
         path: src/*.exe
