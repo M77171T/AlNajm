@@ -1,17 +1,17 @@
-name: AlNajm-Super-Build-System
+name: AlNajm-Ultimate-Automated-Build
 on: [push]
 jobs:
   build-windows:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
-    - name: Install Toolchain
+    - name: Install Tools
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git g++-mingw-w64-x86-64 libssl-dev libevent-dev libboost-all-dev
-    - name: Build BDB
+    - name: Build BDB (Windows)
       run: |
-        BDB_PREFIX="${{ github.workspace }}/db4"
+        BDB_PREFIX="${{ github.workspace }}/db4-win"
         mkdir -p "$BDB_PREFIX"
         curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
         tar -xzf db.tar.gz
@@ -20,7 +20,7 @@ jobs:
         make install -j$(nproc)
     - name: Build Windows
       run: |
-        BDB_PREFIX="${{ github.workspace }}/db4"
+        BDB_PREFIX="${{ github.workspace }}/db4-win"
         chmod +x autogen.sh
         ./autogen.sh
         ./configure --host=x86_64-w64-mingw32 --enable-static --disable-shared --without-gui --with-incompatible-bdb CPPFLAGS="-I${BDB_PREFIX}/include" LDFLAGS="-L${BDB_PREFIX}/lib"
@@ -28,22 +28,32 @@ jobs:
     - name: Upload Windows
       uses: actions/upload-artifact@v4
       with:
-        name: AlNajm-Windows
+        name: AlNajm-Windows-Wallet
         path: src/*.exe
 
   build-android-linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Install Linux/Android Tools
+    - name: Install Android/Linux Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git libssl-dev libevent-dev libboost-all-dev libdb++-dev
-    - name: Build Android-Compatible Core
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git libssl-dev libevent-dev libboost-all-dev
+    - name: Build BDB (Android-Core)
       run: |
+        BDB_PREFIX="${{ github.workspace }}/db4-android"
+        mkdir -p "$BDB_PREFIX"
+        curl -L 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' -o db.tar.gz
+        tar -xzf db.tar.gz
+        cd db-4.8.30.NC/build_unix/
+        ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$BDB_PREFIX"
+        make install -j$(nproc)
+    - name: Build Android-Core
+      run: |
+        BDB_PREFIX="${{ github.workspace }}/db4-android"
         chmod +x autogen.sh
         ./autogen.sh
-        ./configure --enable-static --disable-shared --without-gui --with-incompatible-bdb
+        ./configure --enable-static --disable-shared --without-gui --with-incompatible-bdb CPPFLAGS="-I${BDB_PREFIX}/include" LDFLAGS="-L${BDB_PREFIX}/lib"
         make -j$(nproc)
     - name: Upload Android-Core
       uses: actions/upload-artifact@v4
