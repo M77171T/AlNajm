@@ -102,7 +102,6 @@ const std::string strMessageMagic = "AlNajm Signed Message:\n";
 
 // Internal stuff
 namespace {
-
     struct CBlockIndexWorkComparator
     {
         bool operator()(CBlockIndex *pa, CBlockIndex *pb) const {
